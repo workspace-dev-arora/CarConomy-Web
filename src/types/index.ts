@@ -65,6 +65,18 @@ export interface Driver {
   drivingStyle: DrivingStyle;
 }
 
+export interface DeepDemographicProfile {
+  householdSize: number;
+  primaryScenario: 'OFFICE_COMMUTE' | 'FAMILY_TRIPS' | 'SCHOOL_RUNS' | 'LUXURY_CLIENT' | 'HIGHWAY_TOURING';
+  hasChauffeur: boolean;
+  kidsCount: number;
+  seniorParentsCount: number;
+  consultingFocusGoal: 'MINIMIZE_TCO' | 'KEEP_OR_SELL' | 'TAX_OPTIMIZATION' | 'EV_TRANSITION' | 'LUXURY_UPGRADE';
+  primaryCarPriority: 'SAFETY' | 'EFFICIENCY' | 'RESALE' | 'STATUS' | 'PERFORMANCE';
+  companyAllowanceMonthly?: number;
+  isProfileWizardCompleted?: boolean;
+}
+
 export interface FinancialProfile {
   monthlyIncome: number; // in INR
   householdIncome: number; // in INR
@@ -75,6 +87,13 @@ export interface FinancialProfile {
   loanAmount?: number; // in INR
   interestRate: number; // % annual e.g. 8.85
   loanTenureYears: number;
+  // Deep Tax & Consulting Demographics
+  taxBracketPercent?: number;
+  isCorporateLease?: boolean;
+  isBusinessDepreciationClaimed?: boolean;
+  targetReplacementYears?: number;
+  targetUpgradeCarId?: string;
+  demographics?: DeepDemographicProfile;
 }
 
 export interface OwnershipProfile {

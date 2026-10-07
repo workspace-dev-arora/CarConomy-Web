@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Vehicle, FinancialProfile, OwnershipProfile, CalculatedEconomics, Driver, DrivingStyle, DriverRole } from '../types';
 import { calculateTaxTactics, calculateReplacementRecommendation } from '../utils/calculator';
 import { formatINR } from '../utils/formatters';
 import { Eyebrow, H1, Btn, Rule, Row, Chip } from './kit';
 import { NumField } from './fields';
 import { useTheme } from './theme';
+import { ProfileSetupWizard } from '../components/ProfileSetupWizard';
 
 interface ProfileProps {
   vehicle: Vehicle;
@@ -32,6 +33,7 @@ export const Profile: React.FC<ProfileProps> = ({
   onReset,
 }) => {
   const { theme, toggle } = useTheme();
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const f = (k: keyof FinancialProfile) => (n: number) => onFinance({ ...finance, [k]: n });
 
   const taxAnalysis = calculateTaxTactics(vehicle, finance, eco);
@@ -68,6 +70,35 @@ export const Profile: React.FC<ProfileProps> = ({
           Configure household drivers, tax savings tactics, and optimal replacement timeline.
         </p>
       </div>
+
+      {/* DEEP CONSULTING SETUP WIZARD BANNER */}
+      <div className="p-5 rounded-2xl bg-sunk border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-widest text-accent block">Deep Consulting Setup</span>
+          <p className="text-sm font-semibold text-ink mt-0.5">
+            {finance.demographics?.isProfileWizardCompleted ? '✓ Deep Consulting Profile Completed' : 'Complete your demographic profile for personalized consulting'}
+          </p>
+          <p className="text-xs text-mute mt-0.5">
+            Configures household driver wear, tax brackets, corporate leases & optimal sell recommendations.
+          </p>
+        </div>
+        <Btn onClick={() => setIsWizardOpen(true)} className="whitespace-nowrap">
+          {finance.demographics?.isProfileWizardCompleted ? 'Edit Wizard' : '✨ Start Profile Wizard'}
+        </Btn>
+      </div>
+
+      <ProfileSetupWizard
+        isOpen={isWizardOpen}
+        onClose={() => setIsWizardOpen(false)}
+        finance={finance}
+        ownership={ownership}
+        drivers={drivers}
+        vehicles={vehicles}
+        onSaveProfile={(updatedFinance, updatedDrivers) => {
+          onFinance(updatedFinance);
+          onDrivers(updatedDrivers);
+        }}
+      />
 
       {/* 1. HOUSEHOLD & FAMILY DRIVERS SECTION */}
       <section className="space-y-6">
