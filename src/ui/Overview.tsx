@@ -41,30 +41,35 @@ export const Overview: React.FC<OverviewProps> = ({
   const tone = eco.financialFitTier === 'COMFORTABLE' ? 'good' : eco.financialFitTier === 'STRETCHED' ? 'warn' : 'bad';
   return (
     <div className="space-y-12">
-      {/* LIVE PROTOTYPE JUDGE RECOMMENDATION BANNER */}
+      {/* PROFILE MATCH RECOMMENDATION CARD */}
       {topMatch && (
-        <div className="p-5 rounded-2xl bg-sunk border border-accent/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <span className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-              Dynamic Prototype Recommendation
-            </span>
-            <p className="text-base font-semibold text-ink">
-              #{1} Recommended for Profile: {topMatch.vehicle.make} {topMatch.vehicle.model} ({topMatch.matchScore}% Match Score)
-            </p>
-            <p className="text-xs text-mute leading-snug">
-              {judgeRec.topReason}
+        <div className="p-6 rounded-2xl bg-surface border border-line flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1.5 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Eyebrow className="!text-ink">Recommended for Your Profile</Eyebrow>
+              <span className="text-xs font-medium num px-2.5 py-0.5 rounded-full bg-sunk text-ink border border-line">
+                {topMatch.matchScore}% Match Index
+              </span>
+            </div>
+            <h3 className="font-display text-2xl text-ink">
+              {topMatch.vehicle.make} {topMatch.vehicle.model} <span className="text-mute text-lg italic">{topMatch.vehicle.variant}</span>
+            </h3>
+            <p className="text-xs text-mute leading-relaxed max-w-2xl">
+              {topMatch.reasons.join(' · ')}
             </p>
           </div>
-          {vehicle.id !== topMatch.vehicle.id ? (
-            <Btn onClick={() => onPickVehicle(topMatch.vehicle.id)} className="whitespace-nowrap shrink-0">
-              Switch to {topMatch.vehicle.model} →
-            </Btn>
-          ) : (
-            <span className="text-xs font-bold text-good px-3 py-1.5 rounded-full bg-surface border border-good/30 shrink-0">
-              ✓ Active Selected Car
-            </span>
-          )}
+
+          <div className="flex items-center gap-3 shrink-0">
+            {vehicle.id !== topMatch.vehicle.id ? (
+              <Btn onClick={() => onPickVehicle(topMatch.vehicle.id)} className="whitespace-nowrap">
+                Select {topMatch.vehicle.model} →
+              </Btn>
+            ) : (
+              <span className="text-xs font-medium text-good px-3 py-2 rounded-full bg-sunk border border-good/40">
+                ✓ Currently Active Selection
+              </span>
+            )}
+          </div>
         </div>
       )}
 
