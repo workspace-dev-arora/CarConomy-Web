@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #F3F0E8; --surface: #FBFAF6; --sunk: #EAE6DA;
-  --ink: #15171A; --mute: #6B6A63; --line: #DDD8CA;
-  --accent: #D9480F; --accent-ink: #FFFFFF;
-  --good: #2F6F4E; --bad: #B42318; --warn: #B7791F;
+  --paper: #FAF9F6; --surface: #FFFFFF; --sunk: #F3F1EA;
+  --ink: #0F172A; --mute: #64748B; --line: #E2E8F0;
+  --accent: #10B981; --accent-ink: #FFFFFF;
+  --good: #10B981; --bad: #EF4444; --warn: #F59E0B;
 }
 [data-theme="dark"] {
-  --paper: #0F1012; --surface: #17181B; --sunk: #1E2024;
-  --ink: #ECE9E1; --mute: #9A978D; --line: #2A2C30;
-  --accent: #FF6A2B; --accent-ink: #0F1012;
-  --good: #5FBF8A; --bad: #F2705F; --warn: #E3B14F;
+  --paper: #08090C; --surface: #10131B; --sunk: #181C26;
+  --ink: #F8FAFC; --mute: #94A3B8; --line: rgba(255, 255, 255, 0.08);
+  --accent: #CCFF00; --accent-ink: #000000;
+  --good: #10B981; --bad: #F43F5E; --warn: #F59E0B;
 }
 @theme inline {
   --color-paper: var(--paper); --color-surface: var(--surface); --color-sunk: var(--sunk);
   --color-ink: var(--ink); --color-mute: var(--mute); --color-line: var(--line);
   --color-accent: var(--accent); --color-accent-ink: var(--accent-ink);
   --color-good: var(--good); --color-bad: var(--bad); --color-warn: var(--warn);
-  --font-display: 'Instrument Serif', Georgia, serif;
-  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 html { color-scheme: light; }
