@@ -44,7 +44,9 @@ export const ProfileSetupWizard: React.FC<ProfileSetupWizardProps> = ({
     },
   }));
 
-  const [localDrivers, setLocalDrivers] = useState<Driver[]>(initialDrivers);
+  const safeInitialDrivers = Array.isArray(initialDrivers) ? initialDrivers : [];
+  const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
+  const [localDrivers, setLocalDrivers] = useState<Driver[]>(safeInitialDrivers);
 
   if (!isOpen) return null;
 
@@ -363,11 +365,11 @@ export const ProfileSetupWizard: React.FC<ProfileSetupWizardProps> = ({
               <label className="block">
                 <span className="text-xs text-mute">Target Upgrade Model</span>
                 <select
-                  value={localFinance.targetUpgradeCarId || vehicles[0]?.id}
+                  value={localFinance.targetUpgradeCarId || safeVehicles[0]?.id}
                   onChange={e => setLocalFinance({ ...localFinance, targetUpgradeCarId: e.target.value })}
                   className="mt-1 w-full bg-sunk border border-line rounded-lg px-3 min-h-11 text-sm cursor-pointer"
                 >
-                  {vehicles.map(v => (
+                  {safeVehicles.map(v => (
                     <option key={v.id} value={v.id}>
                       {v.make} {v.model} ({v.variant})
                     </option>

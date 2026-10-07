@@ -1024,6 +1024,8 @@ export function calculateReplacementRecommendation(
   const upgradeCar = allVehicles.find(v => v.id === finance.targetUpgradeCarId) || 
                      allVehicles.find(v => v.id !== vehicle.id) || null;
 
+  const reason = `Optimal resale timing for ${vehicle.make} ${vehicle.model} is at Year ${recommendedYear} (approx. ₹${(estimatedResale / 100000).toFixed(1)}L residual market value). Equity left after paying off remaining loan balance will be ₹${(equityAtExit / 100000).toFixed(1)}L.`;
+
   return {
     targetHorizonYears: targetYears,
     recommendedYearToSell: recommendedYear,

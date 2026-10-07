@@ -23,8 +23,8 @@ interface ProfileProps {
 export const Profile: React.FC<ProfileProps> = ({
   vehicle,
   eco,
-  drivers,
-  vehicles,
+  drivers = [],
+  vehicles = [],
   finance,
   ownership,
   onDrivers,
@@ -36,11 +36,14 @@ export const Profile: React.FC<ProfileProps> = ({
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const f = (k: keyof FinancialProfile) => (n: number) => onFinance({ ...finance, [k]: n });
 
+  const safeDrivers = Array.isArray(drivers) ? drivers : [];
+  const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
+
   const taxAnalysis = calculateTaxTactics(vehicle, finance, eco);
-  const replacementRec = calculateReplacementRecommendation(vehicle, eco, finance, vehicles);
+  const replacementRec = calculateReplacementRecommendation(vehicle, eco, finance, safeVehicles);
 
   const updateDriver = (id: string, key: keyof Driver, val: any) => {
-    onDrivers(drivers.map(d => (d.id === id ? { ...d, [key]: val } : d)));
+    onDrivers(safeDrivers.map(d => (d.id === id ? { ...d, [key]: val } : d)));
   };
 
   const addDriver = () => {
@@ -53,12 +56,12 @@ export const Profile: React.FC<ProfileProps> = ({
       cityHighwaySplit: 70,
       drivingStyle: 'MODERATE',
     };
-    onDrivers([...drivers, newDriver]);
+    onDrivers([...safeDrivers, newDriver]);
   };
 
   const removeDriver = (id: string) => {
-    if (drivers.length <= 1) return;
-    onDrivers(drivers.filter(d => d.id !== id));
+    if (safeDrivers.length <= 1) return;
+    onDrivers(safeDrivers.filter(d => d.id !== id));
   };
 
   return (
@@ -113,7 +116,7 @@ export const Profile: React.FC<ProfileProps> = ({
         </div>
 
         <div className="space-y-4">
-          {drivers.map(d => (
+          {safeDrivers.map(d => (
             <div key={d.id} className="p-4 rounded-2xl bg-surface border border-line space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <input
@@ -122,7 +125,7 @@ export const Profile: React.FC<ProfileProps> = ({
                   onChange={e => updateDriver(d.id, 'name', e.target.value)}
                   className="font-display text-lg bg-transparent border-b border-transparent focus:border-ink outline-none"
                 />
-                {drivers.length > 1 && (
+                {safeDrivers.length > 1 && (
                   <button
                     onClick={() => removeDriver(d.id)}
                     className="text-xs text-bad hover:underline cursor-pointer"
@@ -280,11 +283,11 @@ export const Profile: React.FC<ProfileProps> = ({
           <label className="block">
             <span className="text-xs text-mute">Target Upgrade Vehicle</span>
             <select
-              value={finance.targetUpgradeCarId || vehicles.find(v => v.id !== vehicle.id)?.id}
+              value={finance.targetUpgradeCarId || safeVehicles.find(v => v.id !== vehicle.id)?.id}
               onChange={e => onFinance({ ...finance, targetUpgradeCarId: e.target.value })}
               className="mt-1 w-full bg-sunk border border-line rounded-lg px-3 min-h-11 text-sm cursor-pointer"
             >
-              {vehicles.map(v => (
+              {safeVehicles.map(v => (
                 <option key={v.id} value={v.id}>
                   {v.make} {v.model} ({v.variant})
                 </option>
