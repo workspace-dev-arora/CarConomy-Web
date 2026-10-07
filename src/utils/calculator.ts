@@ -928,3 +928,110 @@ export function calculateComparison(
     diffInterest,
   };
 }
+
+export interface TaxTacticsAnalysis {
+  taxBracketPercent: number;
+  isCorporateLease: boolean;
+  isBusinessDepreciationClaimed: boolean;
+  annualCorporateLeaseTaxSavings: number;
+  annualSec80EEASavings: number;
+  annualDepreciationTaxShield: number;
+  totalAnnualTaxSavings: number;
+  netAnnualOutlayAfterTax: number;
+  netCostPerKmAfterTax: number;
+}
+
+export function calculateTaxTactics(
+  vehicle: Vehicle,
+  finance: FinancialProfile,
+  eco: CalculatedEconomics
+): TaxTacticsAnalysis {
+  const bracket = finance.taxBracketPercent || 30; // default 30% tax bracket
+  const taxRate = bracket / 100;
+  
+  // 1. Corporate Lease / Salary Sacrifice Tax Savings (EMI + Fuel + Maint pre-tax deduction)
+  const isLease = !!finance.isCorporateLease;
+  const annualLeaseEligibleOutlay = eco.annualFinancingInterest + eco.annualFuelCost + eco.annualMaintenance;
+  const annualCorporateLeaseTaxSavings = isLease ? Math.round(annualLeaseEligibleOutlay * taxRate) : 0;
+
+  // 2. Section 80EEA EV Tax Savings (Interest deduction up to ₹1.5L for EV loans)
+  const isEV = eco.energyType === 'ELECTRIC';
+  const claimableEVInterest = Math.min(150000, eco.annualFinancingInterest);
+  const annualSec80EEASavings = isEV ? Math.round(claimableEVInterest * taxRate) : 0;
+
+  // 3. Business Depreciation Tax Shield (15% for ICE, 40% for EV)
+  const isBiz = !!finance.isBusinessDepreciationClaimed;
+  const bizDepRate = isEV ? 0.40 : 0.15;
+  const annualDepShieldAmount = vehicle.purchasePrice * bizDepRate;
+  const annualDepreciationTaxShield = isBiz ? Math.round(annualDepShieldAmount * taxRate) : 0;
+
+  const totalAnnualTaxSavings = annualCorporateLeaseTaxSavings + annualSec80EEASavings + annualDepreciationTaxShield;
+  const netAnnualOutlayAfterTax = Math.max(0, eco.annualTotalCost - totalAnnualTaxSavings);
+  const netCostPerKmAfterTax = eco.annualKm > 0 ? Number((netAnnualOutlayAfterTax / eco.annualKm).toFixed(2)) : eco.costPerKm;
+
+  return {
+    taxBracketPercent: bracket,
+    isCorporateLease: isLease,
+    isBusinessDepreciationClaimed: isBiz,
+    annualCorporateLeaseTaxSavings,
+    annualSec80EEASavings,
+    annualDepreciationTaxShield,
+    totalAnnualTaxSavings,
+    netAnnualOutlayAfterTax,
+    netCostPerKmAfterTax,
+  };
+}
+
+export interface ReplacementRecommendation {
+  targetHorizonYears: number;
+  recommendedYearToSell: number;
+  estimatedResaleAtSellYear: number;
+  recommendedUpgradeCar: Vehicle | null;
+  equityAtExit: number;
+  recommendationReason: string;
+}
+
+export function calculateReplacementRecommendation(
+  vehicle: Vehicle,
+  eco: CalculatedEconomics,
+  finance: FinancialProfile,
+  allVehicles: Vehicle[]
+): ReplacementRecommendation {
+  const targetYears = finance.targetReplacementYears || 4;
+  
+  // Find year where depreciation slows down and maintenance rises
+  let recommendedYear = 4;
+  
+  if (eco.yearlyData && eco.yearlyData.length > 0) {
+    let prevValue = vehicle.purchasePrice;
+    for (const yrData of eco.yearlyData) {
+      const yearDep = prevValue - yrData.vehicleValueAtYearEnd;
+      if (yrData.maintenance > yearDep * 0.7) {
+        recommendedYear = yrData.year;
+        break;
+      }
+      prevValue = yrData.vehicleValueAtYearEnd;
+    }
+  }
+
+  const yrIndex = Math.min(eco.yearlyData.length - 1, Math.max(0, recommendedYear - 1));
+  const estimatedResale = eco.yearlyData[yrIndex]?.vehicleValueAtYearEnd || vehicle.currentValue * 0.5;
+
+  const loanExit = eco.loan.remainingPrincipalAtExit || 0;
+  const equityAtExit = Math.max(0, estimatedResale - loanExit);
+
+  // Pick suitable upgrade car from catalog
+  const upgradeCar = allVehicles.find(v => v.id === finance.targetUpgradeCarId) || 
+                     allVehicles.find(v => v.id !== vehicle.id) || null;
+
+  const reason = `Optimal replacement window is Year ${recommendedYear}. Vehicle equity is ~₹${(estimatedResale / 100000).toFixed(1)}L while maintenance outlays begin to exceed annual depreciation.`;
+
+  return {
+    targetHorizonYears: targetYears,
+    recommendedYearToSell: recommendedYear,
+    estimatedResaleAtSellYear: estimatedResale,
+    recommendedUpgradeCar: upgradeCar,
+    equityAtExit,
+    recommendationReason: reason,
+  };
+}

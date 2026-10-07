@@ -56,25 +56,44 @@ export const Meter: React.FC<{ pct: number; tone?: 'good' | 'warn' | 'bad' }> = 
   </div>
 );
 
+const loadedImageCache = new Set<string>();
+
 /** Honest vehicle image: exact angle only, no cross-angle substitution; fallback names the car. */
 export const VehicleImage: React.FC<{ vehicle: Vehicle; angle?: 'hero' | 'front' | 'rear' | 'side' | 'interior'; priority?: boolean; className?: string }> = ({ vehicle, angle = 'hero', priority, className }) => {
   const src = angle === 'hero' ? (vehicle.images?.hero || vehicle.image) : vehicle.images?.[angle];
-  const [state, setState] = useState<{ src?: string; ok: boolean; err: boolean }>({ src, ok: false, err: false });
-  const cur = state.src === src ? state : { src, ok: false, err: false };
+  const isCached = !!src && loadedImageCache.has(src);
+  const [state, setState] = useState<{ src?: string; ok: boolean; err: boolean }>({ src, ok: isCached, err: false });
+  
+  const isCurrent = state.src === src;
+  const isOk = isCurrent ? state.ok : isCached;
+  const isErr = isCurrent ? state.err : false;
+
   const name = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.variant}`;
   return (
     <div className={cx('relative aspect-[16/10] bg-sunk rounded-2xl overflow-hidden flex items-center justify-center', className)}>
-      {(!src || cur.err) ? (
+      {(!src || isErr) ? (
         <div className="text-center px-4">
           <p className="font-display text-xl">{vehicle.make} {vehicle.model}</p>
           <p className="text-xs text-mute mt-1">Photo unavailable · {angle}</p>
         </div>
       ) : (
         <>
-          {!cur.ok && <div className="absolute inset-0 animate-pulse bg-line/40" />}
-          <img key={src} src={src} alt={name} width={1280} height={800} loading={priority ? 'eager' : 'lazy'} decoding="async"
-            onLoad={() => setState({ src, ok: true, err: false })} onError={() => setState({ src, ok: false, err: true })}
-            className={cx('w-full h-full object-contain transition-opacity duration-300', cur.ok ? 'opacity-100' : 'opacity-0')} />
+          {!isOk && <div className="absolute inset-0 animate-pulse bg-line/40" />}
+          <img
+            key={src}
+            src={src}
+            alt={name}
+            width={1280}
+            height={800}
+            loading={priority ? 'eager' : 'lazy'}
+            decoding="async"
+            onLoad={() => {
+              if (src) loadedImageCache.add(src);
+              setState({ src, ok: true, err: false });
+            }}
+            onError={() => setState({ src, ok: false, err: true })}
+            className={cx('w-full h-full object-contain transition-opacity duration-200', isOk ? 'opacity-100' : 'opacity-0')}
+          />
         </>
       )}
     </div>

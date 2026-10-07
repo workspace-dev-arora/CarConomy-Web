@@ -47,8 +47,20 @@ export default function App() {
         {tab === 'overview' && <Overview vehicle={vehicle} eco={eco} onGo={setTab} />}
         {tab === 'mycar' && <MyCar vehicle={vehicle} eco={eco} drivers={drivers} ownership={ownership} onDrivers={setDrivers} onOwnership={setOwnership} onGo={setTab} />}
         {tab === 'decide' && <Decide vehicle={vehicle} vehicles={vehicles} eco={eco} drivers={drivers} ownership={ownership} finance={finance} onGo={setTab} />}
-        {tab === 'services' && <Services vehicle={vehicle} />}
-        {tab === 'profile' && <Profile finance={finance} ownership={ownership} onFinance={setFinance} onOwnership={setOwnership} onReset={reset} />}
+        {tab === 'profile' && (
+          <Profile
+            vehicle={vehicle}
+            eco={eco}
+            drivers={drivers}
+            vehicles={vehicles}
+            finance={finance}
+            ownership={ownership}
+            onDrivers={setDrivers}
+            onFinance={setFinance}
+            onOwnership={setOwnership}
+            onReset={reset}
+          />
+        )}
       </Shell>
     </ThemeProvider>
   );
