@@ -44,9 +44,21 @@ export default function App() {
     <ThemeProvider>
       {booting && <SplashLoader onDone={handleBooted} />}
       <Shell tab={tab} onTab={setTab} vehicles={vehicles} activeId={vehicle.id} onPick={setActiveId}>
-        {tab === 'overview' && <Overview vehicle={vehicle} eco={eco} onGo={setTab} />}
+        {tab === 'overview' && (
+          <Overview
+            vehicle={vehicle}
+            vehicles={vehicles}
+            finance={finance}
+            drivers={drivers}
+            ownership={ownership}
+            eco={eco}
+            onGo={setTab}
+            onPickVehicle={setActiveId}
+          />
+        )}
         {tab === 'mycar' && <MyCar vehicle={vehicle} eco={eco} drivers={drivers} ownership={ownership} onDrivers={setDrivers} onOwnership={setOwnership} onGo={setTab} />}
         {tab === 'decide' && <Decide vehicle={vehicle} vehicles={vehicles} eco={eco} drivers={drivers} ownership={ownership} finance={finance} onGo={setTab} />}
+        {tab === 'services' && <Services vehicle={vehicle} />}
         {tab === 'profile' && (
           <Profile
             vehicle={vehicle}

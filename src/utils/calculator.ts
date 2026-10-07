@@ -1024,8 +1024,6 @@ export function calculateReplacementRecommendation(
   const upgradeCar = allVehicles.find(v => v.id === finance.targetUpgradeCarId) || 
                      allVehicles.find(v => v.id !== vehicle.id) || null;
 
-  const reason = `Optimal replacement window is Year ${recommendedYear}. Vehicle equity is ~₹${(estimatedResale / 100000).toFixed(1)}L while maintenance outlays begin to exceed annual depreciation.`;
-
   return {
     targetHorizonYears: targetYears,
     recommendedYearToSell: recommendedYear,
@@ -1033,5 +1031,129 @@ export function calculateReplacementRecommendation(
     recommendedUpgradeCar: upgradeCar,
     equityAtExit,
     recommendationReason: reason,
+  };
+}
+
+export interface VehicleMatchRank {
+  vehicle: Vehicle;
+  matchScore: number; // 0 to 100
+  taxSavingsAnnual: number;
+  costPerKm: number;
+  monthlyCommitment: number;
+  incomeAllocationPercent: number;
+  financialFitTier: FinancialFitTier;
+  reasons: string[];
+}
+
+export interface DynamicJudgeRecommendation {
+  topCar: Vehicle;
+  topScore: number;
+  topReason: string;
+  rankedCars: VehicleMatchRank[];
+}
+
+export function evaluateJudgeProfileRecommendation(
+  allVehicles: Vehicle[],
+  finance: FinancialProfile,
+  drivers: Driver[],
+  ownership: OwnershipProfile
+): DynamicJudgeRecommendation {
+  if (!allVehicles || allVehicles.length === 0) {
+    throw new Error("No vehicles available for evaluation");
+  }
+
+  const demo = finance.demographics;
+  const targetPriority = demo?.primaryCarPriority || 'SAFETY';
+  const consultingGoal = demo?.consultingFocusGoal || 'MINIMIZE_TCO';
+  const hasKids = (demo?.kidsCount || 0) > 0;
+  const hasSeniors = (demo?.seniorParentsCount || 0) > 0;
+  const isCorporate = !!finance.isCorporateLease || !!finance.isBusinessDepreciationClaimed;
+
+  const rankedCars: VehicleMatchRank[] = allVehicles.map(v => {
+    const eco = calculateTrueCost(v, drivers, ownership, finance, 'TARGET_BUY');
+    const tax = calculateTaxTactics(v, finance, eco);
+    let score = 50;
+    const reasons: string[] = [];
+
+    // 1. Affordability Score (Up to 30 pts)
+    const alloc = eco.incomeAllocationPercent;
+    if (alloc <= 18) {
+      score += 30;
+      reasons.push(`Comfortable budget (${alloc.toFixed(1)}% income)`);
+    } else if (alloc <= 28) {
+      score += 20;
+      reasons.push(`Manageable budget (${alloc.toFixed(1)}% income)`);
+    } else if (alloc <= 38) {
+      score += 10;
+    } else {
+      score -= 15;
+    }
+
+    // 2. Tax Shield Optimization (Up to 25 pts)
+    if (isCorporate) {
+      if (v.energyType === 'ELECTRIC') {
+        score += 25;
+        reasons.push(`Max EV Tax Shield (Saves ₹${(tax.totalAnnualTaxSavings / 100000).toFixed(1)}L/yr)`);
+      } else if (v.purchasePrice >= 3500000) {
+        score += 20;
+        reasons.push(`High Corporate Lease Write-off (Saves ₹${(tax.totalAnnualTaxSavings / 100000).toFixed(1)}L/yr)`);
+      }
+    }
+
+    // 3. Family / Passenger Capacity (Up to 15 pts)
+    if ((hasKids || hasSeniors || (demo?.householdSize || 1) >= 4) && (v.model.includes('Fortuner') || v.model.includes('XUV700') || v.model.includes('Camry') || v.model.includes('Creta'))) {
+      score += 15;
+      reasons.push('Spacious cabin for family & seniors');
+    }
+
+    // 4. Priority Alignment (Up to 20 pts)
+    if (targetPriority === 'EFFICIENCY' && (v.energyType === 'ELECTRIC' || v.energyType === 'HYBRID')) {
+      score += 20;
+      reasons.push(`High Efficiency (${eco.energyEfficiencyDisplay})`);
+    } else if (targetPriority === 'RESALE' && v.depreciationRate <= 0.09) {
+      score += 20;
+      reasons.push('Exceptional Resale Value Retention');
+    } else if (targetPriority === 'STATUS' && (v.make === 'BMW' || v.make === 'Mercedes-Benz' || v.make === 'Porsche')) {
+      score += 20;
+      reasons.push('Luxury Badge & Executive Status');
+    } else if (targetPriority === 'PERFORMANCE' && parseFloat(v.specs.zeroToHundred || '99') <= 6.5) {
+      score += 20;
+      reasons.push(`Thrilling Acceleration (${v.specs.zeroToHundred} 0-100)`);
+    } else if (targetPriority === 'SAFETY') {
+      score += 15;
+      reasons.push('High Safety & Warranty');
+    }
+
+    // 5. Consulting Goal Bonus
+    if (consultingGoal === 'EV_TRANSITION' && v.energyType === 'ELECTRIC') {
+      score += 15;
+    }
+
+    const finalScore = Math.min(99, Math.max(25, Math.round(score)));
+
+    return {
+      vehicle: v,
+      matchScore: finalScore,
+      taxSavingsAnnual: tax.totalAnnualTaxSavings,
+      costPerKm: eco.costPerKm,
+      monthlyCommitment: eco.totalMonthlyCarCommitment,
+      incomeAllocationPercent: eco.incomeAllocationPercent,
+      financialFitTier: eco.financialFitTier,
+      reasons,
+    };
+  });
+
+  rankedCars.sort((a, b) => b.matchScore - a.matchScore);
+
+  const topMatch = rankedCars[0];
+  const topCar = topMatch.vehicle;
+  const topScore = topMatch.matchScore;
+  const topReason = `${topCar.make} ${topCar.model} is your #1 match (${topScore}% Match Score): ${topMatch.reasons.join(', ')}.`;
+
+  return {
+    topCar,
+    topScore,
+    topReason,
+    rankedCars,
   };
 }

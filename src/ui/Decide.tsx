@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Vehicle, Driver, OwnershipProfile, FinancialProfile, CalculatedEconomics } from '../types';
-import { calculateComparison } from '../utils/calculator';
+import { calculateComparison, evaluateJudgeProfileRecommendation } from '../utils/calculator';
 import { formatINR, formatCostPerKm } from '../utils/formatters';
 import { Eyebrow, H1, Big, Row, Segmented, Chip, NextStep, VehicleImage, Meter, cx } from './kit';
 import { Tab } from './Shell';
@@ -42,8 +42,10 @@ const KeepSell: React.FC<{ eco: CalculatedEconomics }> = ({ eco }) => {
 
 const Buy: React.FC<{ vehicle: Vehicle; vehicles: Vehicle[]; drivers: Driver[]; ownership: OwnershipProfile; finance: FinancialProfile }> = ({ vehicle, vehicles, drivers, ownership, finance }) => {
   const others = vehicles.filter(v => v.id !== vehicle.id);
-  const [bId, setBId] = useState(others[0]?.id);
-  const b = others.find(v => v.id === bId) || others[0];
+  const judgeRec = useMemo(() => evaluateJudgeProfileRecommendation(vehicles, finance, drivers, ownership), [vehicles, finance, drivers, ownership]);
+  const defaultTargetId = (judgeRec.topCar && judgeRec.topCar.id !== vehicle.id) ? judgeRec.topCar.id : (others[0]?.id || vehicles[0].id);
+  const [bId, setBId] = useState(defaultTargetId);
+  const b = others.find(v => v.id === bId) || others[0] || vehicles[0];
   const cmp = useMemo(() => b ? calculateComparison(vehicle, b, drivers, ownership, finance) : null, [vehicle, b, drivers, ownership, finance]);
   if (!cmp || !b) return null;
   const { ecoA, ecoB } = cmp;

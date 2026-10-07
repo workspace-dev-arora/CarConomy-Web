@@ -1,10 +1,34 @@
 import React from 'react';
-import { Vehicle, FinancialProfile, CalculatedEconomics } from '../types';
+import { Vehicle, FinancialProfile, OwnershipProfile, Driver, CalculatedEconomics } from '../types';
 import { formatINR, formatCostPerKm } from '../utils/formatters';
-import { Eyebrow, H1, Big, Row, Meter, NextStep, VehicleImage } from './kit';
+import { evaluateJudgeProfileRecommendation } from '../utils/calculator';
+import { Eyebrow, H1, Big, Row, Meter, NextStep, VehicleImage, Btn } from './kit';
 import { Tab } from './Shell';
 
-export const Overview: React.FC<{ vehicle: Vehicle; eco: CalculatedEconomics; onGo: (t: Tab) => void }> = ({ vehicle, eco, onGo }) => {
+interface OverviewProps {
+  vehicle: Vehicle;
+  vehicles: Vehicle[];
+  finance: FinancialProfile;
+  drivers: Driver[];
+  ownership: OwnershipProfile;
+  eco: CalculatedEconomics;
+  onGo: (t: Tab) => void;
+  onPickVehicle: (id: string) => void;
+}
+
+export const Overview: React.FC<OverviewProps> = ({
+  vehicle,
+  vehicles,
+  finance,
+  drivers,
+  ownership,
+  eco,
+  onGo,
+  onPickVehicle,
+}) => {
+  const judgeRec = evaluateJudgeProfileRecommendation(vehicles, finance, drivers, ownership);
+  const topMatch = judgeRec.rankedCars[0];
+
   const parts = [
     ['Depreciation', eco.annualDepreciation, 'bg-accent'],
     ['Fuel / energy', eco.annualFuelCost, 'bg-ink'],
@@ -17,6 +41,33 @@ export const Overview: React.FC<{ vehicle: Vehicle; eco: CalculatedEconomics; on
   const tone = eco.financialFitTier === 'COMFORTABLE' ? 'good' : eco.financialFitTier === 'STRETCHED' ? 'warn' : 'bad';
   return (
     <div className="space-y-12">
+      {/* LIVE PROTOTYPE JUDGE RECOMMENDATION BANNER */}
+      {topMatch && (
+        <div className="p-5 rounded-2xl bg-sunk border border-accent/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <span className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+              Dynamic Prototype Recommendation
+            </span>
+            <p className="text-base font-semibold text-ink">
+              #{1} Recommended for Profile: {topMatch.vehicle.make} {topMatch.vehicle.model} ({topMatch.matchScore}% Match Score)
+            </p>
+            <p className="text-xs text-mute leading-snug">
+              {judgeRec.topReason}
+            </p>
+          </div>
+          {vehicle.id !== topMatch.vehicle.id ? (
+            <Btn onClick={() => onPickVehicle(topMatch.vehicle.id)} className="whitespace-nowrap shrink-0">
+              Switch to {topMatch.vehicle.model} →
+            </Btn>
+          ) : (
+            <span className="text-xs font-bold text-good px-3 py-1.5 rounded-full bg-surface border border-good/30 shrink-0">
+              ✓ Active Selected Car
+            </span>
+          )}
+        </div>
+      )}
+
       <section className="grid lg:grid-cols-2 gap-8 lg:gap-14 items-center">
         <VehicleImage vehicle={vehicle} priority />
         <div>
