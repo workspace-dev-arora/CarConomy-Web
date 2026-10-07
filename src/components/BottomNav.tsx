@@ -16,7 +16,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#090C11]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#090C11]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]">
       <div className="max-w-md mx-auto flex items-center justify-around">
         {items.map((item) => {
           const Icon = item.icon;
